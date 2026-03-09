@@ -33,7 +33,7 @@ def google_oauth_callback(request):
     
     # 1. Obtener el código de autorización (de POST o GET)
     code = request.data.get('code') or request.query_params.get('code')  # ← CAMBIO AQUÍ
-    
+    redirect_uri = getattr(settings, 'OAUTH_REDIRECT_URI', 'http://127.0.0.1:8000/api/auth/google/callback/')
     if not code:
         error_msg = 'El código de autorización es requerido'
         logger.error(error_msg)
@@ -51,7 +51,7 @@ def google_oauth_callback(request):
             'code': code,
             'client_id': google_config['client_id'],
             'client_secret': google_config['secret'],
-            'redirect_uri': 'http://127.0.0.1:8000/api/auth/google/callback/',  # Debe coincidir con Google Cloud
+            'redirect_uri': redirect_uri,  # ← Usar variable dinámica
             'grant_type': 'authorization_code'
         }
         
@@ -178,10 +178,18 @@ def google_oauth_redirect(request):
         'access_type': 'offline',
         'prompt': 'consent',
     }
-    
+    redirect_uri = getattr(settings, 'OAUTH_REDIRECT_URI', 'http://127.0.0.1:8000/api/auth/google/callback/')
     # Construir URL con urlencode para codificar correctamente los parámetros
-    auth_url = f'https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}'  # ← USAR URLENCODE
     
+    auth_url = (
+    'https://accounts.google.com/o/oauth2/v2/auth'
+    f'?client_id={google_config["client_id"]}'
+    f'&redirect_uri={redirect_uri}'  # ← Usar variable dinámica
+    f'&scope={" ".join(scopes)}'
+    '&response_type=code'
+    '&access_type=offline'
+    '&prompt=consent'
+    )   
     return Response({
         'auth_url': auth_url
     }, status=status.HTTP_200_OK)
