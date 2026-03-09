@@ -212,3 +212,5 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',               # Claim que identifica tipo de token
     'JTI_CLAIM': 'jti',                             # JWT ID (identificador único)
 }
+
+#XDD
