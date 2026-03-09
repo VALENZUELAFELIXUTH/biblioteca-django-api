@@ -38,10 +38,18 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django.contrib.sites',
     # Third-party apps
     'rest_framework',
     'corsheaders',
     'django_filters',
+    'rest_framework_simplejwt',
+    'django_extensions',
+    'oauth2_provider',  # ← AGREGAR (Django OAuth Toolkit)
+    'allauth',  # ← AGREGAR
+    'allauth.account',  # ← AGREGAR
+    'allauth.socialaccount',  # ← AGREGAR
+    'allauth.socialaccount.providers.google',  # ← AGREGAR
     
     # Tu aplicación
     'libros',
@@ -56,14 +64,32 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'allauth.account.middleware.AccountMiddleware',  # ← AGREGAR
 ]
+
+
+# =======================
+# AUTHENTICATION BACKENDS
+# =======================
+AUTHENTICATION_BACKENDS = [
+    # Backend por defecto de Django (username/password)
+    'django.contrib.auth.backends.ModelBackend',
+    
+    # Backend de allauth para OAuth social
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# =======================
+# SITE CONFIGURATION
+# =======================
+SITE_ID = 1  # ← AGREGAR
 
 ROOT_URLCONF = "biblioteca_project.urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        'DIRS': [BASE_DIR / 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -156,6 +182,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
     # AUTENTICACIÓN: Qué métodos acepta tu API
+    
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT (Token moderno)
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',  # ← AGREGAR para OAuth 2.0
@@ -177,6 +204,7 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
+        
     ],
 }
 
@@ -214,3 +242,55 @@ SIMPLE_JWT = {
 }
 
 #XDD
+
+# =======================
+# DJANGO ALLAUTH CONFIG
+# =======================
+
+# Configuración de cuentas
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False  # Solo email para login social
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Para desarrollo: 'mandatory' en producción
+
+# Configuración de login social
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Crear usuario automáticamente
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # No verificar email en OAuth
+
+# Proveedores OAuth configurados
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'APP': {
+            'client_id': '32610679900-6nskj49o1rpqfngmsrt57arm1o0l027o.apps.googleusercontent.com',  # ← REEMPLAZAR
+            'secret': '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',  # ← REEMPLAZAR
+            'key': ''
+        }
+    }
+}
+
+# =======================
+# OAUTH 2.0 PROVIDER SETTINGS
+# =======================
+# Configuración para django-oauth-toolkit
+OAUTH2_PROVIDER = {
+    # Tiempo de vida de los tokens
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 3600,  # 1 hora
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 86400 * 7,  # 7 días
+    
+    # Scopes disponibles
+    'SCOPES': {
+        'read': 'Acceso de lectura',
+        'write': 'Acceso de escritura',
+    },
+    
+    # Tipo de token por defecto
+    'ACCESS_TOKEN_MODEL': 'oauth2_provider.AccessToken',
+    'REFRESH_TOKEN_MODEL': 'oauth2_provider.RefreshToken',
+}
